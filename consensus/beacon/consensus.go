@@ -361,7 +361,14 @@ func (beacon *Beacon) FinalizeAndAssemble(chain consensus.ChainHeaderReader, hea
 	if !beacon.IsPoSHeader(header) {
 		return beacon.ethone.FinalizeAndAssemble(chain, header, state, txs, uncles, receipts, nil)
 	}
+
+	bochi := chain.Config().IsBochi(header.Number, header.Time)
+	if bochi {
+		return nil, errors.New("bochi activated, need to reject newer block")
+	}
+
 	shanghai := chain.Config().IsShanghai(header.Number, header.Time)
+
 	if shanghai {
 		// All blocks after Shanghai must include a withdrawals root.
 		if withdrawals == nil {
