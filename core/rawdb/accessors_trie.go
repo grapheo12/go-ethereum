@@ -157,6 +157,7 @@ func HasLegacyTrieNode(db ethdb.KeyValueReader, hash common.Hash) bool {
 
 // WriteLegacyTrieNode writes the provided legacy trie node to database.
 func WriteLegacyTrieNode(db ethdb.KeyValueWriter, hash common.Hash, node []byte) {
+	log.Warn("Writing to DB", string(hash.Bytes()), string(node))
 	if err := db.Put(hash.Bytes(), node); err != nil {
 		log.Crit("Failed to store legacy trie node", "err", err)
 	}

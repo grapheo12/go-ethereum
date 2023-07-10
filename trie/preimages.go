@@ -22,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // preimageStore is the store for caching preimages of node key.
@@ -74,6 +75,10 @@ func (store *preimageStore) commit(force bool) error {
 	store.lock.Lock()
 	defer store.lock.Unlock()
 
+	log.Warn("Flushing to disk", "preimage size", store.preimagesSize, "force", force)
+	for k, v := range store.preimages {
+		log.Warn("\t KV Pair", k, v)
+	}
 	if store.preimagesSize <= 4*1024*1024 && !force {
 		return nil
 	}

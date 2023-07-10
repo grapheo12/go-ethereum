@@ -288,6 +288,7 @@ type ChainConfig struct {
 	ShanghaiTime *uint64 `json:"shanghaiTime,omitempty"` // Shanghai switch time (nil = no fork, 0 = already on shanghai)
 	CancunTime   *uint64 `json:"cancunTime,omitempty"`   // Cancun switch time (nil = no fork, 0 = already on cancun)
 	PragueTime   *uint64 `json:"pragueTime,omitempty"`   // Prague switch time (nil = no fork, 0 = already on prague)
+	BochiTime    *uint64 `json:"bochiTime,omitempty"`    // Stop downloading blocks (SLSNH)
 
 	// TerminalTotalDifficulty is the amount of total difficulty reached by
 	// the network that triggers the consensus upgrade.
@@ -379,6 +380,9 @@ func (c *ChainConfig) Description() string {
 	}
 	if c.GrayGlacierBlock != nil {
 		banner += fmt.Sprintf(" - Gray Glacier:                #%-8v (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/gray-glacier.md)\n", c.GrayGlacierBlock)
+	}
+	if c.BochiTime != nil {
+		banner += fmt.Sprintf(" - BochiTime:                #%-8v (SLSNH)\n", c.BochiTime)
 	}
 	banner += "\n"
 
@@ -491,6 +495,10 @@ func (c *ChainConfig) IsTerminalPoWBlock(parentTotalDiff *big.Int, totalDiff *bi
 	return parentTotalDiff.Cmp(c.TerminalTotalDifficulty) < 0 && totalDiff.Cmp(c.TerminalTotalDifficulty) >= 0
 }
 
+func (c *ChainConfig) IsBochi(num *big.Int, time uint64) bool {
+	return isTimestampForked(c.BochiTime, time)
+}
+
 // IsShanghai returns whether time is either equal to the Shanghai fork time or greater.
 func (c *ChainConfig) IsShanghai(num *big.Int, time uint64) bool {
 	return c.IsLondon(num) && isTimestampForked(c.ShanghaiTime, time)
@@ -557,6 +565,7 @@ func (c *ChainConfig) CheckConfigForkOrder() error {
 		{name: "arrowGlacierBlock", block: c.ArrowGlacierBlock, optional: true},
 		{name: "grayGlacierBlock", block: c.GrayGlacierBlock, optional: true},
 		{name: "mergeNetsplitBlock", block: c.MergeNetsplitBlock, optional: true},
+		{name: "bochiTime", timestamp: c.BochiTime, optional: true},
 		{name: "shanghaiTime", timestamp: c.ShanghaiTime},
 		{name: "cancunTime", timestamp: c.CancunTime, optional: true},
 		{name: "pragueTime", timestamp: c.PragueTime, optional: true},
@@ -808,6 +817,7 @@ type Rules struct {
 	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul bool
 	IsBerlin, IsLondon                                      bool
 	IsMerge, IsShanghai, IsCancun, IsPrague                 bool
+	IsBochi                                                 bool
 }
 
 // Rules ensures c's ChainID is not nil.
@@ -832,5 +842,6 @@ func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules 
 		IsShanghai:       c.IsShanghai(num, timestamp),
 		IsCancun:         c.IsCancun(num, timestamp),
 		IsPrague:         c.IsPrague(num, timestamp),
+		IsBochi:          c.IsBochi(num, timestamp),
 	}
 }
